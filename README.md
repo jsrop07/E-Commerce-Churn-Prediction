@@ -183,63 +183,91 @@
 - 아티팩트(모델/스케일러/피처 순서/평가 결과)를 표준 디렉토리에 저장
 
 
-# 📂 프로젝트 설계 
-```
-📦 SKN23-2nd-3Team/
-├── data/
-│   ├── raw/
-│   │   └── *.parquet
-│   └── processed/
-│       └── *.parquet
-│
-├── app/
-│   ├── *.py
-│   ├── pages/
-│   │   └── *.py
-│   └── utils/
-│       └── *.py
-│
-├── models/
-│   ├── *.py
-│   ├── configs/
-│   │   └── ...
-│   ├── dl/
-│   │   └── ...
-│   ├── eval/
-│   │   └── *.json
-│   ├── preprocessing/
-│   │   └── *.py
-│   └── trained_model/
-│       └── ...
-│
-├── reports/
-│   ├── preprocessing/
-│   │   └── *.json
-│   ├── training/
-│   │   └── *.md
-│   └── insights/
-│       └── *.md
-│
-├── assets/
-│   ├── images/
-│   │   └── *.png
-│   ├── eda/
-│   │   └── *.png
-│   ├── training/
-│   │   └── ...
-│   └── ui/
-│       └── ...
-│
-└── notebooks/
-    ├── ml/
-    │   └── *.ipynb
-    └── dl/
-        └── *.ipynb
+# 📂 프로젝트 설계 (Project Architecture)
 
-📁 README.md
-📁 requirements.txt
-📁 .gitignore
+## ✦ 시스템 아키텍처 (System Architecture)
+본 프로젝트는 데이터 수집부터 모델 학습, 평가, 그리고 최종 서비스 배포까지의 전 과정을 기술적인 설계 사양에 맞춰 구축하였습니다. 
 
+<div align="center">
+  <img src="assets/images/system_architecture.png" alt="시스템 아키텍처" width="900">
+</div>
+
+> [!NOTE]
+> **전체 워크플로우 설계**
+> - **데이터 파이프라인**: 1단계(전처리)부터 6단계(인사이트 도출)까지의 수직 파이프라인을 통해 정교한 모델링을 수행합니다.
+> - **최종 모델 선택**: 모든 성능 지표를 고려하여 **MLP Advanced (Residual Connection)** 모델을 최종 추론 엔진으로 채택하였습니다.
+
+> [!NOTE]
+> **데이터 및 연산 관련 안내**
+> - 본 프로젝트의 대용량 원본 데이터 처리 및 딥러닝 모델 학습은 **Google Colab GPU 환경**에서 수행되었습니다.
+> - 따라서 대용량 `.parquet` 데이터나 일부 중간 로그 파일은 로컬 저장소에 포함되어 있지 않을 수 있으며, 서비스 구동에 필수적인 최적화된 모델 아티팩트 위주로 구성되어 있습니다.
+
+<br>
+
+## ✦ 화면 흐름도 (Service Flow)
+사용자가 서비스에 접속하여 대시보드 기능을 이용하고 예측 결과를 확인하기까지의 전체적인 내비게이션 흐름입니다.
+
+<div align="center">
+  <img src="assets/images/screen_flow.png" alt="화면 흐름도" width="800">
+</div>
+
+<br>
+
+## ✦ 상세 파일 구조 (Project Structure)
+프로젝트의 각 모듈별 상세 역할과 파일 구성은 다음과 같습니다.
+
+```bash
+📦 SKN23-2nd-3Team
+├── 🏠 app/                 # Streamlit 기반 이탈 예측 플랫폼
+│   ├── Home.py             # 메인 대시보드 (KPI 및 성과 요약)
+│   ├── pages/              # 기능별 상세 페이지
+│   │   ├── 2_Model_Compare.py # ML vs DL 모델 성능 정밀 비교
+│   │   ├── 3_Report_Download.py # 인사이트 및 리포트 파일 생성
+│   │   ├── 4_Predict.py    # 실시간 이탈 위험도 예측 및 타겟팅
+│   │   └── 5_FAQ_QnA.py    # 프로젝트 FAQ 및 기술 문서
+│   └── utils/              # 서비스 구동 유틸리티
+│       ├── artifacts.py    # 모델/데이터 아티팩트 관리 유틸
+│       ├── feature_schema.py # 피처 순서 및 데이터 규격 정의
+│       ├── inference.py    # 전처리부터 예측까지의 추론 파이프라인
+│       ├── load_metrics.py # 평가 지표 로드 및 가공
+│       ├── load_model.py   # ML/DL 모델 로딩 및 캐싱
+│       ├── metrics.py      # Lift@K, Precision@K 등 커스텀 지표 계산
+│       ├── paths.py        # 프로젝트 내 파일 경로 일괄 관리
+│       ├── plotting.py     # Streamlit 시각화 컴포넌트 생성
+│       ├── save.py         # 결과 저장 및 리포트 출력 유틸
+│       └── ui.py           # 커스텀 CSS 및 디자인 요소 정의
+│
+├── 📊 data/                # 데이터 레이어 (Colab에서 가공)
+│   ├── raw/                # 원본 로그 (정제 전)
+│   └── processed/          # Anchor 기반 전처리 완료 데이터 (.parquet)
+│
+├── 🤖 models/              # AI 모델 자산
+│   ├── model_definitions.py # Pytorch 모델 구조 클래스 정의
+│   ├── ml/                 # 머신러닝(LGBM, HGB, LR) 가중치 (.pkl)
+│   ├── dl/                 # 딥러닝(Residual MLP) 가중치 (.pt)
+│   ├── preprocessing/      # Scaler, Encoder 등 전처리 객체
+│   ├── configs/            # 하이퍼파라미터 및 학습 설정 JSON
+│   └── eval/               # 모델별 성능 지표 분석 결과
+│
+├── 🧪 notebooks/           # 실험 및 분석 노트북 (Colab 호환)
+│   ├── ml/                 # ML 모델 튜닝 및 성능 비교 실험
+│   └── dl/                 # DL 아키텍처 설계 및 최적화 실험
+│
+├── 📑 reports/             # 프로젝트 산출물 및 인사이트 리포트
+│   ├── preprocessing/      # 데이터 구축 과정 상세 리포트
+│   ├── training/           # 모델별 최종 성능 리포트
+│   └── insights/           # 도출된 비즈니스 액션 아이템
+│
+├── 🖼️ assets/               # 이미지 및 시각화 자산
+│   ├── eda/                # 탐색적 데이터 분석 결과 차트
+│   ├── images/             # 시스템 아키텍처 및 서비스 스크린샷
+│   ├── training/           # 학습 결과 시각화
+│   └── ui/                 # 대시보드 UI 구성 요소
+│
+├── README.md               # 프로젝트 종합 안내서
+├── requirements.txt        # 환경 구축 의존성 (pip install -r)
+├── .gitignore              # 대용량 데이터 및 환경 파일 제외 설정
+└── 파일구조.txt             # 전체 파일 리스트 상세 기술
 ```
 
 <br><br>
