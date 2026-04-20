@@ -84,7 +84,7 @@
 <br>
 
 ### ✦ 프로젝트 기간
-> 2026.01.14(수) ~ 2026.01.15(목) **(2일)**
+> 2026.01.02(목) ~ 2026.01.15(목) **(14일)**
 
 <br>
 
@@ -137,10 +137,10 @@
 
 
 ### ✦ 타겟팅 가정 (Operational Targeting)
-- 운영 제약: 마케팅 예산/인력으로 인해 **상위 K% 고위험 고객만 케어 가능**
+- 운영 제약: 마케팅 예산/인력으로 인해 **상위 K% 고위험 고객만 케어 가능**.
 
 ### ✦ 휴면이 이탈인가?
-- 본 프로젝트에서 **이탈(Churn)**은 서비스 해지처럼 명시적 이벤트가 존재하지 않는 이커머스 환경을 고려하여, 향후 H일 동안 핵심 활동이 없는 휴면(Dormant)을 이탈의 대체 **지표(proxy)**로 정의하였다. 이는 마케팅 운영 관점에서 **되돌릴 수 있는 이탈 위험군**을 선별하기 위한 설정이다.
+- 본 프로젝트에서 **이탈(Churn)**은 서비스 해지처럼 명시적 이벤트가 존재하지 않는 이커머스 환경을 고려하여, 향후 H일 동안 핵심 활동이 없는 휴면(Dormant)을 이탈의 대체 **지표(proxy)**로 정의하였습니다. 이는 마케팅 운영 관점에서 **되돌릴 수 있는 이탈 위험군**을 선별하기 위한 설정입니다.
 
 <br><br>
 
@@ -154,7 +154,7 @@
   - Lift@K = Precision@K / Prevalence(전체 휴면 비율)
 
 ### ✦ Secondary KPI
-- **Precision@K**: 상위 K% 타겟의 “순도” (쿠폰 낭비 최소화)
+- **Precision@K**: 상위 K% 타겟의 **순도** (쿠폰 낭비 최소화)
 - **Recall@K**: 전체 휴면 중 상위 K%가 커버한 비율 (커버리지)
 
 ### ✦ Diagnostic / 참고 지표
@@ -171,7 +171,7 @@
 복잡한 다중 분류 대신, 실제 마케팅 액션(쿠폰 발송 등)이 가능한 **휴면(m2) 여부 이진 분류**로 문제를 단순화하여 실용성을 높였습니다.
 
 **2. 비즈니스 중심의 평가지표 (Business-Aligned Metrics)**  
-운영 시나리오가 **“상위 K%만 타겟”**이므로, 임계값(예: 0.5) 기반 지표만으로는 부족합니다.  
+운영 시나리오가 **상위 K%만 타겟**이므로, 임계값(예: 0.5) 기반 지표만으로는 부족합니다.  
 따라서 랭킹 기반 지표를 사용합니다.  
 - PR-AUC(AP): PR 곡선의 요약(Threshold-free)
 - Precision@TopK(%) / Recall@TopK(%): 상위 K%의 타겟팅 품질
@@ -183,63 +183,91 @@
 - 아티팩트(모델/스케일러/피처 순서/평가 결과)를 표준 디렉토리에 저장
 
 
-# 📂 프로젝트 설계 
-```
-📦 SKN23-2nd-3Team/
-├── data/
-│   ├── raw/
-│   │   └── *.parquet
-│   └── processed/
-│       └── *.parquet
-│
-├── app/
-│   ├── *.py
-│   ├── pages/
-│   │   └── *.py
-│   └── utils/
-│       └── *.py
-│
-├── models/
-│   ├── *.py
-│   ├── configs/
-│   │   └── ...
-│   ├── dl/
-│   │   └── ...
-│   ├── eval/
-│   │   └── *.json
-│   ├── preprocessing/
-│   │   └── *.py
-│   └── trained_model/
-│       └── ...
-│
-├── reports/
-│   ├── preprocessing/
-│   │   └── *.json
-│   ├── training/
-│   │   └── *.md
-│   └── insights/
-│       └── *.md
-│
-├── assets/
-│   ├── images/
-│   │   └── *.png
-│   ├── eda/
-│   │   └── *.png
-│   ├── training/
-│   │   └── ...
-│   └── ui/
-│       └── ...
-│
-└── notebooks/
-    ├── ml/
-    │   └── *.ipynb
-    └── dl/
-        └── *.ipynb
+# 📂 프로젝트 설계 (Project Architecture)
 
-📁 README.md
-📁 requirements.txt
-📁 .gitignore
+## ✦ 시스템 아키텍처 (System Architecture)
+본 프로젝트는 데이터 수집부터 모델 학습, 평가, 그리고 최종 서비스 배포까지의 전 과정을 기술적인 설계 사양에 맞춰 구축하였습니다. 
 
+<div align="center">
+  <img src="assets/images/system_architecture.png" alt="시스템 아키텍처" width="900">
+</div>
+
+> [!NOTE]
+> **전체 워크플로우 설계**
+> - **데이터 파이프라인**: 1단계(전처리)부터 6단계(인사이트 도출)까지의 수직 파이프라인을 통해 정교한 모델링을 수행합니다.
+> - **최종 모델 선택**: 모든 성능 지표를 고려하여 **MLP Advanced (Residual Connection)** 모델을 최종 추론 엔진으로 채택하였습니다.
+
+> [!NOTE]
+> **데이터 및 연산 관련 안내**
+> - 본 프로젝트의 대용량 원본 데이터 처리 및 딥러닝 모델 학습은 **Google Colab GPU 환경**에서 수행되었습니다.
+> - 따라서 대용량 `.parquet` 데이터나 일부 중간 로그 파일은 로컬 저장소에 포함되어 있지 않을 수 있으며, 서비스 구동에 필수적인 최적화된 모델 아티팩트 위주로 구성되어 있습니다.
+
+<br>
+
+## ✦ 화면 흐름도 (Service Flow)
+사용자가 서비스에 접속하여 대시보드 기능을 이용하고 예측 결과를 확인하기까지의 전체적인 내비게이션 흐름입니다.
+
+<div align="center">
+  <img src="assets/images/screen_flow.png" alt="화면 흐름도" width="800">
+</div>
+
+<br>
+
+## ✦ 상세 파일 구조 (Project Structure)
+프로젝트의 각 모듈별 상세 역할과 파일 구성은 다음과 같습니다.
+
+```bash
+📦 SKN23-2nd-3Team
+├── 🏠 app/                 # Streamlit 기반 이탈 예측 플랫폼
+│   ├── Home.py             # 메인 대시보드 (KPI 및 성과 요약)
+│   ├── pages/              # 기능별 상세 페이지
+│   │   ├── 2_Model_Compare.py # ML vs DL 모델 성능 정밀 비교
+│   │   ├── 3_Report_Download.py # 인사이트 및 리포트 파일 생성
+│   │   ├── 4_Predict.py    # 실시간 이탈 위험도 예측 및 타겟팅
+│   │   └── 5_FAQ_QnA.py    # 프로젝트 FAQ 및 기술 문서
+│   └── utils/              # 서비스 구동 유틸리티
+│       ├── artifacts.py    # 모델/데이터 아티팩트 관리 유틸
+│       ├── feature_schema.py # 피처 순서 및 데이터 규격 정의
+│       ├── inference.py    # 전처리부터 예측까지의 추론 파이프라인
+│       ├── load_metrics.py # 평가 지표 로드 및 가공
+│       ├── load_model.py   # ML/DL 모델 로딩 및 캐싱
+│       ├── metrics.py      # Lift@K, Precision@K 등 커스텀 지표 계산
+│       ├── paths.py        # 프로젝트 내 파일 경로 일괄 관리
+│       ├── plotting.py     # Streamlit 시각화 컴포넌트 생성
+│       ├── save.py         # 결과 저장 및 리포트 출력 유틸
+│       └── ui.py           # 커스텀 CSS 및 디자인 요소 정의
+│
+├── 📊 data/                # 데이터 레이어 (Colab에서 가공)
+│   ├── raw/                # 원본 로그 (정제 전)
+│   └── processed/          # Anchor 기반 전처리 완료 데이터 (.parquet)
+│
+├── 🤖 models/              # AI 모델 자산
+│   ├── model_definitions.py # Pytorch 모델 구조 클래스 정의
+│   ├── ml/                 # 머신러닝(LGBM, HGB, LR) 가중치 (.pkl)
+│   ├── dl/                 # 딥러닝(Residual MLP) 가중치 (.pt)
+│   ├── preprocessing/      # Scaler, Encoder 등 전처리 객체
+│   ├── configs/            # 하이퍼파라미터 및 학습 설정 JSON
+│   └── eval/               # 모델별 성능 지표 분석 결과
+│
+├── 🧪 notebooks/           # 실험 및 분석 노트북 (Colab 호환)
+│   ├── ml/                 # ML 모델 튜닝 및 성능 비교 실험
+│   └── dl/                 # DL 아키텍처 설계 및 최적화 실험
+│
+├── 📑 reports/             # 프로젝트 산출물 및 인사이트 리포트
+│   ├── preprocessing/      # 데이터 구축 과정 상세 리포트
+│   ├── training/           # 모델별 최종 성능 리포트
+│   └── insights/           # 도출된 비즈니스 액션 아이템
+│
+├── 🖼️ assets/               # 이미지 및 시각화 자산
+│   ├── eda/                # 탐색적 데이터 분석 결과 차트
+│   ├── images/             # 시스템 아키텍처 및 서비스 스크린샷
+│   ├── training/           # 학습 결과 시각화
+│   └── ui/                 # 대시보드 UI 구성 요소
+│
+├── README.md               # 프로젝트 종합 안내서
+├── requirements.txt        # 환경 구축 의존성 (pip install -r)
+├── .gitignore              # 대용량 데이터 및 환경 파일 제외 설정
+└── 파일구조.txt             # 전체 파일 리스트 상세 기술
 ```
 
 <br><br>
@@ -330,9 +358,8 @@
   
 - 사용 이유 : 가장 단순하고 빠르며, **class_weight="balanced"와 StandardScaler 기반**으로 불균형 이진 분류에서 해석 가능하고 안정적인 기준선을 확보하고, 이후 모델 성능 향상을 비교할 공정한 베이스라인으로 사용했습니다.
 
-- Top-K 타겟팅과의 연결: tune_lr_on_val_topk()에서 Top-K(예: 10%) 기준 Recall/Lift를 직접 최적화하여, “상위 K%만 타겟팅”이라는 운영 목적에 맞춘 기준선을 만들었습니다.
+- Top-K 타겟팅과의 연결: tune_lr_on_val_topk()에서 Top-K(예: 10%) 기준 Recall/Lift를 직접 최적화하여, **상위 K%만 타겟팅**이라는 운영 목적에 맞춘 기준선을 만들었습니다.
 
-- 필요 자료 -> 모델 평가지표 비교 그래프 및 표 / 대표 코드
 
 ## LightGBM
 - 개념 : 트리 기반 Gradient Boosting 모델로, 탭 피처에서 비선형 관계/피처 간 상호작용을 잘 포착하며, 실무에서 널리 쓰이는 강력한 모델입니다.
@@ -341,7 +368,6 @@
 
 - Top-K 타겟팅과의 연결: tune_lgbm_on_val()에서 Top-K(5%) 기반 Recall/Lift + PR-AUC를 결합한 점수로 하이퍼파라미터를 선택해, “상위 K% 고객 선별” 목적에 직접 최적화했습니다.
 
-- 필요 자료 -> 모델 평가지표 비교 그래프 및 표 / 대표 코드
 
 ## HistGradientBoosting
 - 개념 : scikit-learn의 히스토그램 기반 Gradient Boosting으로, 데이터가 클 때 학습이 효율적이며 트리 부스팅 계열로 비선형·상호작용을 잘 학습합니다(외부 라이브러리 의존이 적고 재현성이 좋음).
@@ -351,7 +377,7 @@
 
 - Top-K 타겟팅과의 연결: 튜닝 목표를 val Recall@Top{BEST_K_PCT}% 우선 + 동률이면 PR-AUC로 두어, “상위 K% 고객을 최대한 놓치지 않는” 운영 목적을 직접 반영했습니다.
 
-- 필요 자료 -> 모델 평가지표 비교 그래프 및 표 / 대표 코드
+
 
 | Logistic Regression | LightGBM | Histogram Gradient Boosting |
 | :--: | :--: | :--: |
@@ -454,14 +480,14 @@
 ## 1. 데이터 불균형과 모델 성능 개선
 > <strong>"모든 유저를 '이탈'로 예측하는 엉터리 모델을 어떻게 고쳤는가?"</strong>
 
-- <strong>문제 상황 (Problem)</strong>
+- <strong>문제 상황 (Problem)</strong>    
   이탈 유저가 <strong>81%</strong>나 되다 보니, 모델이 그냥 <strong>"전부 이탈"</strong>이라고 찍어도 정확도가 높게 나오는 문제가 있었습니다. 정작 우리가 찾아야 할 타겟 유저는 하나도 못 찾는 상태였습니다.
 
-- <strong>해결 전략 (Solution)</strong>
+- <strong>해결 전략 (Solution)</strong>     
   1. <strong>평가 기준 변경 (Top 5% 타겟팅)</strong>: 단순 정확도 대신, 마케팅 예산이 집행될 <strong>상위 5% 유저를 얼마나 잘 맞추는지(Precision)</strong>를 핵심 지표로 바꿨습니다.
   2. <strong>Model Architecture Pivot</strong>: 단일 모델의 한계를 넘기 위해 여러 특성을 동시에 고려할 수 있는 <strong>Wide & Deep 구조</strong>를 도입했습니다. (※ 인위적인 데이터 뻥튀기 방식은 사용하지 않았습니다.)
 
-- <strong>성과 (Impact)</strong>
+- <strong>성과 (Impact)</strong>    
   <strong>Top 5% Precision</strong>을 최우선으로 최적화한 결과, 무작위로 타겟팅할 때보다 <strong>선별력(Lift)이 1.16배 이상</strong> 좋아져 가장 성능이 좋은 모델이 되었습니다.
 
 ---
@@ -469,10 +495,10 @@
 ## 2. 학습 불안정성 & 하이퍼파라미터 최적화
 > <strong>"수동으로 설정하던 방식에서 어떻게 최적값을 확정했는가?"</strong>
 
-- <strong>문제 상황 (Problem)</strong>
+- <strong>문제 상황 (Problem)</strong>    
   초기에는 히든 레이어 수나 학습률(Learning Rate) 같은 <strong>하이퍼파라미터(Hyperparameter)</strong>를 사람이 직접 입력했습니다. 그러다 보니 학습 도중 <strong>Loss가 `NaN`으로 발산</strong>하거나, 최적의 조합을 찾기 위해 수십 번씩 코드를 수정하고 재실행해야 하는 비효율이 발생했습니다.
 
-- <strong>해결 전략 (Solution)</strong>
+- <strong>해결 전략 (Solution)</strong>    
 
   **Step 1: Optuna를 이용한 자동 탐색 (Search Phase)**
   최적화 프레임워크인 **Optuna**를 도입하여, 광범위한 파라미터 공간(Search Space)에서 최적의 조합을 자동으로 찾았습니다. 이때 **Batch Normalization**을 추가하여 `NaN` 발산 문제를 해결했습니다.
